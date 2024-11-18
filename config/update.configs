@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# update cesm configs
+cp cesm/* ../cesm2.1.5/cime/config/cesm/machines
+
+# update clm configs
+cp cesm/* ../clm5.0/cime/config/cesm/machines
+
+# update ctsm-master configs
+cp ctsm-master/config_batch.xml ctsm-master/config_machines.xml ../ctsm-master/ccs_config/machines
+cp ctsm-master/cmake_macros/gnu_hipergator.cmake ../ctsm-master/ccs_config/machines/cmake_macros
+cp -r ctsm-master/hipergator ../ctsm-master/ccs_config/machines/
+

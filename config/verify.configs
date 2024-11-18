@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# verify cesm
+echo "cesm 2.1.5"
+xmllint --noout --schema ../cesm2.1.5/cime/config/xml_schemas/config_machines.xsd cesm/config_machines.xml
+xmllint --noout --schema ../cesm2.1.5/cime/config/xml_schemas/config_batch.xsd cesm/config_batch.xml
+xmllint --noout --schema ../cesm2.1.5/cime/config/xml_schemas/config_compilers_v2.xsd cesm/config_compilers.xml
+
+echo 
+
+# verify clm
+echo "clm 5.0"
+xmllint --noout --schema ../clm5.0/cime/config/xml_schemas/config_machines.xsd cesm/config_machines.xml
+xmllint --noout --schema ../clm5.0/cime/config/xml_schemas/config_batch.xsd cesm/config_batch.xml
+xmllint --noout --schema ../clm5.0/cime/config/xml_schemas/config_compilers_v2.xsd cesm/config_compilers.xml
+
+echo
+
+# verify ctsm configs
+echo "ctsm-master"
+xmllint --noout --schema ../ctsm-master/cime/CIME/data/config/xml_schemas/config_machines.xsd ctsm-master/hipergator/config_machines.xml 
+xmllint --noout --schema ../ctsm-master/cime/CIME/data/config/xml_schemas/config_batch.xsd ctsm-master/config_batch.xml 
+
+echo
+
+# verify ctsm configs
+echo "ctsm"
+xmllint --noout --schema ../ctsm/cime/config/xml_schemas/config_machines.xsd ctsm/config_machines.xml
+xmllint --noout --schema ../ctsm/cime/config/xml_schemas/config_batch.xsd ctsm/config_batch.xml
+xmllint --noout --schema ../ctsm/cime/config/xml_schemas/config_compilers_v2.xsd ctsm/config_compilers.xml

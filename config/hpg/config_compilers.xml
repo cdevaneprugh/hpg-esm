@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config_compilers version="2.0">
+<compiler COMPILER="gnu" MACH="hipergator">
+  <FFLAGS>
+    <append>-fallow-argument-mismatch -fallow-invalid-boz</append>
+  </FFLAGS>
+  <ESMF_LIBDIR>/apps/gcc/12.2.0/openmpi/4.1.6/esmf/8.7.0/lib/libO/Linux.gfortran.64.openmpi.default</ESMF_LIBDIR>
+  <LAPACK_LIBDIR>/apps/gcc/12.2.0/lapack/3.11.0/lib</LAPACK_LIBDIR>
+  <NETCDF_PATH>/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2</NETCDF_PATH>
+  <NETCDF_C_PATH>/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2</NETCDF_C_PATH>
+  <NETCDF_FORTRAN_PATH>/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1</NETCDF_FORTRAN_PATH>
+  <SLIBS>
+    <append>$SHELL{/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1/bin/nf-config --flibs}</append>
+    <append>-L/apps/gcc/12.2.0/lapack/3.11.0/lib -llapack -lblas</append>
+  </SLIBS>
+</compiler>
+</config_compilers>
