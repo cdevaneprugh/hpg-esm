@@ -1428,6 +1428,7 @@ using a fortran linker.
   <FFLAGS>
     <append>-fallow-argument-mismatch -fallow-invalid-boz</append>
   </FFLAGS>
+  <ESMF_LIBDIR>/apps/gcc/12.2.0/openmpi/4.1.6/esmf/8.7.0/lib/libO/Linux.gfortran.64.openmpi.default</ESMF_LIBDIR>
   <LAPACK_LIBDIR>/apps/gcc/12.2.0/lapack/3.11.0/lib</LAPACK_LIBDIR>
   <NETCDF_PATH>/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2</NETCDF_PATH>
   <NETCDF_C_PATH>/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2</NETCDF_C_PATH>

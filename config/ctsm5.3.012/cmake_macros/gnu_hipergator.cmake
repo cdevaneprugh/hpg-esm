@@ -1,5 +1,3 @@
-string(APPEND FFLAGS " -fallow-argument-mismatch  -fallow-invalid-boz ")
-
 set(ESMF_LIBDIR "/apps/gcc/12.2.0/openmpi/4.1.6/esmf/8.7.0/lib/libO/Linux.gfortran.64.openmpi.default")
 set(LAPACK_LIBDIR "/apps/gcc/12.2.0/lapack/3.11.0/lib")
 set(NETCDF_PATH "/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2")

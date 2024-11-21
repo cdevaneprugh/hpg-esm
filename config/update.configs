@@ -9,8 +9,8 @@ cp cesm/* ../clm5.0/cime/config/cesm/machines
 # update ctsm configs
 cp ctsm/* ../ctsm/cime/config/cesm/machines/
 
-# update ctsm-master configs
-cp ctsm-master/config_batch.xml ctsm-master/config_machines.xml ../ctsm-master/ccs_config/machines
-cp ctsm-master/cmake_macros/gnu_hipergator.cmake ../ctsm-master/ccs_config/machines/cmake_macros
-cp -r ctsm-master/hipergator ../ctsm-master/ccs_config/machines/
+# update ctsm5.3 configs
+cp ctsm5.3.012/config_batch.xml ctsm5.3.012/config_machines.xml ../ctsm5.3.012/ccs_config/machines
+cp ctsm5.3.012/cmake_macros/gnu_hipergator.cmake ../ctsm5.3.012/ccs_config/machines/cmake_macros
+cp -r ctsm5.3.012/hipergator ../ctsm5.3.012/ccs_config/machines/
 

@@ -177,7 +177,7 @@ Follow directions in the [CESM documentation](https://escomp.github.io/CESM/vers
 cd /blue/GROUP/earth_models
 
 # clone the cesm repository
-git clone -b release-cesm2.1.5 https://github.com/ESCOMP/CESM.git cesm215
+git clone -b release-cesm2.1.5 https://github.com/ESCOMP/CESM.git cesm2.1.5
 
 # cd into your cesm directory
 cd cesm215
@@ -236,8 +236,8 @@ While this is _technically_ optional, you should download [cprnc](https://github
 Make sure `cmake` a compiler suite, and the corresponding `netcdf` libraries are loaded.
 
 ```bash
-module load gcc/12.2.0 openmpi/4.1.5 netcdf-c/4.9.2
-module load gcc/12.2.0 openmpi/4.1.5 netcdf-f/4.6.1
+module load gcc/12.2.0 openmpi/4.1.6 netcdf-c/4.9.2
+module load gcc/12.2.0 openmpi/4.1.6 netcdf-f/4.6.1
 ```
 
 Clone the repository and `cd` into it.
