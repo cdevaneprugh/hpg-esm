@@ -1,0 +1,7 @@
+Configs in the hpg directory can serve as a template for what to add to a specific Earth model's default configs.
+
+Config files in the cesm directory can deploy to cesm2.1 and clm5.0 Earth models.
+
+Configs in the ctsm directory should deploy to the corresponding ctsm Earth model.
+
+If you want to install E3SM or cesm2.2 make another config directory and modify the update/verify scripts as needed.
