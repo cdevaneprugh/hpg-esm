@@ -38,6 +38,8 @@ __CIME__ - Common Infrastructure for Modeling the Earth (pronounced “SEAM”) 
 
 __CLM__ - [Community Land Model](https://www.cesm.ucar.edu/models/clm). The land component used in CESM. It has the capability to model specific processes such as vegetation composition, heat transfer in soil, carbon-nitrogen cycling, canopy hydrology, and many more.
 
+**CTSM** - [Community Terrestrial Systems Model](https://github.com/ESCOMP/CTSM). An extension of CLM that is meant to be run as an alternative to CESM.
+
 __E3SM__ - Energy Exascale Earth System Model. E3SM is the Department of Energy's climate model. Forked from CESM v1 and developed independently by the DOE, they describe E3SM as "an ongoing, state-of-the-science Earth system modeling, simulation, and prediction project that optimizes the use of DOE laboratory resources to meet the science needs of the nation and the mission needs of DOE."
 
 __HPG__ - HiPerGator. The supercomputer used at UF. I'll use HPG and HiPerGator interchangeably throughout the documentation.
@@ -162,6 +164,31 @@ module save default
 
 This will ensure that the needed programs are loaded by default when you log in to HiPerGator.
 
+### Module Environment for Earth Models
+
+While the default modules should be loaded at a minimum, creating a module environment that includes everything required for your given Earth model is not a bad idea for consistency. On HiPerGator we are set up to use the `gcc` compiler with Earth models. So a module collection for our `CESM 2.1.5` and `CTSM 5.3` setup includes the following.
+
+```
+# include the modules from above
+module load perl/5.24.1 subversion/1.9.7 cmake/3.26.4
+
+# load the gnu compiler, openmpi, netcdf, and other required libraries
+module load gcc/12.2.0
+module load python/3.11
+module load lapack/3.11.0
+module load openmpi/4.1.6 netcdf-c/4.9.2 netcdf-f/4.6.1
+
+# save it as a new collection
+module save esm_gnu_env
+
+# test and make sure the collection was saved properly by purging and reloading
+module purge
+module restore esm_gnu_env
+module list
+```
+
+
+
 ## Porting CESM<a name="cesm_port"></a>
 
 CESM has [two primary releases](https://www.cesm.ucar.edu/models), the current development release (v2.2.2 at the time of this writing), and the production release (v2.1.5). We will be using the production release. I am following the [CESM documentation](https://escomp.github.io/CESM/versions/cesm2.1/html/index.html), as well as the [CIME porting documentation](https://esmci.github.io/cime/versions/master/html/users_guide/porting-cime.html) while adding the steps needed to get this working on HiPerGator.
@@ -180,7 +207,7 @@ cd /blue/GROUP/earth_models
 git clone -b release-cesm2.1.5 https://github.com/ESCOMP/CESM.git cesm2.1.5
 
 # cd into your cesm directory
-cd cesm215
+cd cesm2.1.5
 
 # download the external components
 ./manage_externals/checkout_externals
@@ -229,7 +256,7 @@ git checkout maint-5.6
 
 If you run `./checkout_externals -S` after changing the CIME branch, it may show an error that CIME is not using the correct version. You can ignore this.
 
-### Install the cprnc tool<a name="cprnc_install"></a>
+## Install the cprnc tool<a name="cprnc_install"></a>
 
 While this is _technically_ optional, you should download [cprnc](https://github.com/ESMCI/cprnc), a tool used to compare netcdf files. We installed this in `/blue/GROUP/earth_models` as it is a utility shared by both CESM and E3SM.
 
@@ -260,7 +287,7 @@ The executable will be located at `/blue/GROUP/earth_models/cprnc/bld/cprnc`.
 
 ## Porting and Validating CIME<a name="cime_port"></a>
 
-HPG has all the appropriate software and libraries installed and checked for functionality. However, we have to set up three configuration files to ensure CIME knows how to access the resources it needs. There are two ways we can do this.
+HPG has all the appropriate software and libraries installed and checked for functionality. However, we have to set up configuration files to ensure CIME knows how to access the resources it needs. There are two ways we can do this.
 
 1. You can edit **$CIMEROOT/config/$model/machines/config_machines.xml** and add an appropriate section for your machine.
 2. You can use your **$HOME/.cime** directory (see [CIME config and hooks](https://esmci.github.io/cime/versions/master/html/users_guide/cime-customize.html#customizing-cime)). In particular, you can create a **$HOME/.cime/config_machines.xml** file with the definition for your machine. A template to create this definition is provided in **$CIMEROOT/config/xml_schemas/config_machines_template.xml**. More details are provided in the template file. In addition, if you have a batch system, you will also need to add a **config_batch.xml** file to your **$HOME/.cime** directory. All files in **$HOME/.cime/** are appended to the xml objects that are read into memory from the **$CIME/config/$model**, where **$model** is either `e3sm` or `cesm`.
