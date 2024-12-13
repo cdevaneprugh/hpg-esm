@@ -91,6 +91,7 @@ Bash (Bourne Again Shell) is one of the most commonly used command line interpre
 9. **grep (Global Regular Expression Print):**
    - Searches for text patterns.
    - Example: `grep foo notes.txt` searches for the term "foo" in the file notes.txt.
+10. **chmod**
 10. **man (Manual):**
     - Displays manual pages for commands, providing detailed information about their usage and options.
     - Example: `man ls` displays the manual page for the `ls` command.
@@ -143,6 +144,13 @@ Unlike a personal computer, HiPerGator is a collection of connected computers (c
 
 Please read the page on our scheduler [here](https://help.rc.ufl.edu/doc/HPG_Scheduling). The full documentation for the SLURM scheduler can be found [here](https://slurm.schedmd.com/documentation.html).
 
+## HiPerGator Specific Linux Commands
+
+1. `env | grep HPC | sort`
+2. `tree | less` in exploring directory trees in hipergator
+3. slurm resource monitoring and canceling job scripts
+4. 
+
 # Earth Models<a name="esm_title"></a>
 
 Both Earth models (E3SM and CESM) use the same underlying infrastructure (CIME) to build and run cases (experiments). CIME generates the scripts necessary to download appropriate files, build the case, and push it to the scheduler to run on a compute node. In some sense, downloading and porting the Earth models is not so much about the specific Earth model, and more about getting CIME to interact with HiPerGator properly. The configuration files CIME uses are almost entirely the same (except for a couple extra parameters for E3SM). 
@@ -166,7 +174,7 @@ This will ensure that the needed programs are loaded by default when you log in 
 
 ### Module Environment for Earth Models
 
-While the default modules should be loaded at a minimum, creating a module environment that includes everything required for your given Earth model is not a bad idea for consistency. On HiPerGator we are set up to use the `gcc` compiler with Earth models. So a module collection for our `CESM 2.1.5` and `CTSM 5.3` setup includes the following.
+While the default modules should be loaded at a minimum, creating a module environment that includes everything required for your given Earth model is not a bad idea for consistency. On HiPerGator we are set up to use the `gnu` compiler with Earth models. So a module collection for our `CESM 2.1.5` and `CTSM 5.3` setup includes the following.
 
 ```
 # include the modules from above
@@ -187,7 +195,58 @@ module restore esm_gnu_env
 module list
 ```
 
+This is not 100% necessary to build all cases or experiments in an Earth model. However, sometimes certain scripts don't behave well (mostly due to `python`), so having all the modules that will be used on the compute node loaded when you build it the case, can be a useful way to mitigate these issues.
 
+## CIME
+
+## Porting and Validating CIME<a name="cime_port"></a>
+
+HPG has all the appropriate software and libraries installed and checked for functionality. However, we have to set up configuration files to ensure CIME knows how to access the resources it needs. There are two ways we can do this.
+
+1. You can edit **$CIMEROOT/config/$model/machines/config_machines.xml** and add an appropriate section for your machine.
+2. You can use your **$HOME/.cime** directory (see [CIME config and hooks](https://esmci.github.io/cime/versions/master/html/users_guide/cime-customize.html#customizing-cime)). In particular, you can create a **$HOME/.cime/config_machines.xml** file with the definition for your machine. A template to create this definition is provided in **$CIMEROOT/config/xml_schemas/config_machines_template.xml**. More details are provided in the template file. In addition, if you have a batch system, you will also need to add a **config_batch.xml** file to your **$HOME/.cime** directory. All files in **$HOME/.cime/** are appended to the xml objects that are read into memory from the **$CIME/config/$model**, where **$model** is either `e3sm` or `cesm`.
+
+We are using method two, as there some parameters in the config files that need to be defined by the user, such as their email address, preferred IO directory structure, etc. I have created config files that are set up for hpg. The files are available on this github repository, and should be saved in `/home/$USER/.cime`. You should just be able to do a `git checkout` in your home directory, then modify the appropriate parameters. Most parameters in the config files will be the same for every research group at UF. There are detailed comments in the config files explaining what needs to be changed for each user.
+
+```bash
+# make sure you're in your home directory
+cd
+
+# checkout the files
+git checkout -r URL_HERE .cime
+
+# make sure the files are there
+ls .cime
+```
+
+## Install the cprnc tool<a name="cprnc_install"></a>
+
+While this is _technically_ optional, you should download [cprnc](https://github.com/ESMCI/cprnc), a tool used to compare netcdf files. We installed this in `/blue/GROUP/earth_models` as it is a utility shared by both CESM and E3SM.
+
+Make sure `cmake` a compiler suite, and the corresponding `netcdf` libraries are loaded.
+
+```bash
+module load gcc/12.2.0 openmpi/4.1.6 netcdf-c/4.9.2
+module load gcc/12.2.0 openmpi/4.1.6 netcdf-f/4.6.1
+```
+
+Clone the repository and `cd` into it.
+
+```bash
+git clone https://github.com/ESMCI/cprnc.git cprnc
+cd cprnc
+```
+
+Follow directions in the README. `cprnc` is a fortran-90 program, and it may throw an error that it can't find the `netcdf-c` libraries, but this doesn't seem to matter as far as building the executable.
+
+```bash
+mkdir bld
+cd bld
+cmake ../
+make
+```
+
+The executable will be located at `/blue/GROUP/earth_models/cprnc/bld/cprnc`.
 
 ## Porting CESM<a name="cesm_port"></a>
 
@@ -256,55 +315,6 @@ git checkout maint-5.6
 
 If you run `./checkout_externals -S` after changing the CIME branch, it may show an error that CIME is not using the correct version. You can ignore this.
 
-## Install the cprnc tool<a name="cprnc_install"></a>
-
-While this is _technically_ optional, you should download [cprnc](https://github.com/ESMCI/cprnc), a tool used to compare netcdf files. We installed this in `/blue/GROUP/earth_models` as it is a utility shared by both CESM and E3SM.
-
-Make sure `cmake` a compiler suite, and the corresponding `netcdf` libraries are loaded.
-
-```bash
-module load gcc/12.2.0 openmpi/4.1.6 netcdf-c/4.9.2
-module load gcc/12.2.0 openmpi/4.1.6 netcdf-f/4.6.1
-```
-
-Clone the repository and `cd` into it.
-
-```bash
-git clone https://github.com/ESMCI/cprnc.git cprnc
-cd cprnc
-```
-
-Follow directions in the README. `cprnc` is a fortran-90 program, and it may throw an error that it can't find the `netcdf-c` libraries, but this doesn't seem to matter as far as building the executable.
-
-```bash
-mkdir bld
-cd bld
-cmake ../
-make
-```
-
-The executable will be located at `/blue/GROUP/earth_models/cprnc/bld/cprnc`.
-
-## Porting and Validating CIME<a name="cime_port"></a>
-
-HPG has all the appropriate software and libraries installed and checked for functionality. However, we have to set up configuration files to ensure CIME knows how to access the resources it needs. There are two ways we can do this.
-
-1. You can edit **$CIMEROOT/config/$model/machines/config_machines.xml** and add an appropriate section for your machine.
-2. You can use your **$HOME/.cime** directory (see [CIME config and hooks](https://esmci.github.io/cime/versions/master/html/users_guide/cime-customize.html#customizing-cime)). In particular, you can create a **$HOME/.cime/config_machines.xml** file with the definition for your machine. A template to create this definition is provided in **$CIMEROOT/config/xml_schemas/config_machines_template.xml**. More details are provided in the template file. In addition, if you have a batch system, you will also need to add a **config_batch.xml** file to your **$HOME/.cime** directory. All files in **$HOME/.cime/** are appended to the xml objects that are read into memory from the **$CIME/config/$model**, where **$model** is either `e3sm` or `cesm`.
-
-We are using method two, as there some parameters in the config files that need to be defined by the user, such as their email address, preferred IO directory structure, etc. I have created config files that are set up for hpg. The files are available on this github repository, and should be saved in `/home/$USER/.cime`. You should just be able to do a `git checkout` in your home directory, then modify the appropriate parameters. Most parameters in the config files will be the same for every research group at UF. There are detailed comments in the config files explaining what needs to be changed for each user.
-
-```bash
-# make sure you're in your home directory
-cd
-
-# checkout the files
-git checkout -r URL_HERE .cime
-
-# make sure the files are there
-ls .cime
-```
-
 ### Regression Testing<a name="reg_tests"></a>
 
 Once the config files are setup, we need to run regression tests to ensure things are working correctly. The regression tests script will test various parameters of the Earth model in isolation, then send a dozen or two small cases to the scheduler to be run. This script is not resource intensive and can be run from a login node.
@@ -342,6 +352,20 @@ module load python-core/2.7.14
 ```
 
 Additionally, to use the `addmetadata` script we need the `nco` tool `ncks`. The version available on hipergator is not new enough so we will have to create a conda environment and install the tool ourselves. Instructions for using conda on hipergator can be found [here](https://help.rc.ufl.edu/doc/Conda). You just need to download the most recent version of `nco` with something like `mamba install nco`.
+
+### Basic Usage of CESM
+
+### Single Point Cases in CESM
+
+## CTSM
+
+### Porting CTSM<a name="ctsm_port"></a>
+
+### Testing CTSM
+
+### Basic Usage of CTSM
+
+### Single Point Cases in CTSM
 
 # Single Point Cases<a name="pts_mode"></a>
 
