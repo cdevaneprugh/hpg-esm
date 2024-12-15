@@ -1,5 +1,3 @@
-# hpg-esm
-
 # Table of Contents
 
 1. [Introduction](#intro)
@@ -21,9 +19,20 @@
    3. [Porting and Validating CIME](#cime_port)
       1. [Regression Testing](#reg_tests)
       2. [Ensemble Consistency Testing](#ect)
-5. [Single Point Cases](#pts_mode)
+5. [Using CESM on HiPerGator](#using_cesm)
+   1. [Recommended Reading](#cesm_reading)
+   2. [CESM File Structure on HPG](#cesm_structure)
+   3. [Creating, Building, & Running a Case on HPG](#cesm_case)
+   4. [Example Case](#clm_example)
+   	1. [Did My Case Fail, or Time Out?](#fail_vs_timeout)
+6. [Single Point Cases](#pts_mode)
    1. [Best Practices & Where We Went Wrong](#clm_best_practices)
    2. [Compset Testing](#clm_compset_testing)
+7. [Single Point Cases With Spin Up](#pts_slides)
+   1. [Exercise 4a: Create a Global Case](#ex_4a)
+   2. [Exercise 4b: Generate Domain and Surface Datasets](#ex_4b)
+   3. [Exercise 4c: Create a New Case for the Single Point Run](#ex_4c)
+   4. [Exercise 4d: Single Point BGC_AD](#ex_4d)
 
 
 # Introduction <a name="intro"></a>
@@ -91,11 +100,13 @@ Bash (Bourne Again Shell) is one of the most commonly used command line interpre
 9. **grep (Global Regular Expression Print):**
    - Searches for text patterns.
    - Example: `grep foo notes.txt` searches for the term "foo" in the file notes.txt.
-10. **chmod**
-10. **man (Manual):**
+10. __chmod__
+   - Access and change permissions.
+   - Example: ` chmod +x MY_SCRIPT.sh` would add the ability for a script you have written to be executed.
+11. **man (Manual):**
     - Displays manual pages for commands, providing detailed information about their usage and options.
     - Example: `man ls` displays the manual page for the `ls` command.
-11. **Piping (|):**
+12. **Piping (|):**
     - Allows the output of one command to be used as input to another command.
     - Example: `command1 | command2` (output of `command1` is used as input for `command2`).
     - Example: `ls Documents | grep my_file` Will search the "Documents" directory for files titled "my_file." You could also add the `-r` flag to the `grep` command to search within each file for the search term.
@@ -149,13 +160,45 @@ Please read the page on our scheduler [here](https://help.rc.ufl.edu/doc/HPG_Sch
 1. `env | grep HPC | sort`
 2. `tree | less` in exploring directory trees in hipergator
 3. slurm resource monitoring and canceling job scripts
-4. 
+4. `git restore`
+
+### bashrc
+
+A few things are helpful to add to your .bashrc file in the home directory.
+
+1. shortcut to ESM
+2. define your GROUP
+3. define your cime and case output directories.
 
 # Earth Models<a name="esm_title"></a>
 
-Both Earth models (E3SM and CESM) use the same underlying infrastructure (CIME) to build and run cases (experiments). CIME generates the scripts necessary to download appropriate files, build the case, and push it to the scheduler to run on a compute node. In some sense, downloading and porting the Earth models is not so much about the specific Earth model, and more about getting CIME to interact with HiPerGator properly. The configuration files CIME uses are almost entirely the same (except for a couple extra parameters for E3SM). 
+Earth models like E3SM, CESM, and CTSM use the same underlying infrastructure (CIME) to build and run cases (experiments). CIME generates the scripts necessary to download appropriate files, build the case, and push it to the scheduler to run on a compute node. In some sense, downloading and porting the Earth models is not so much about the specific Earth model, and more about getting CIME to interact with HiPerGator properly. The configuration files CIME uses are almost entirely the same between all the models, with a exceptions depending on the version of CIME an Earth model is using. 
 
-Ultimately, the goal at UF is to have both the Earth models installed in some shared directory on HiPerGator, but until then this can serve as a guide to do an install for your research group. Going forward, I am assuming you are reasonably comfortable navigating HiPerGator and using basic Linux commands.
+Ultimately, the goal at UF is to have several of Earth models installed in some shared directory on HiPerGator, but until then this can serve as a guide to do an install for your research group. Going forward, I am assuming you are reasonably comfortable navigating HiPerGator and using basic Linux commands.
+
+## General Directory Structure
+
+For the `gerber` group, we have a shared directory on our group blue drive at `/blue/gerber/earth_models` which will contain the cloned repositories of different Earth models, our configuration files, and
+
+TREE of the earth models, config files, etc
+
+earth_models
+├── cesm2.1.5
+├── config
+│   ├── cesm
+│   │   ├── config_batch.xml
+│   │   ├── config_compilers.xml
+│   │   └── config_machines.xml
+│   ├── ctsm
+│   │   ├── config_machines.xml
+│   │   └── hipergator
+│   │       ├── config_batch.xml
+│   │       ├── config_machines.xml
+│   │       └── gnu_hipergator.cmake
+│   ├── README
+│   ├── update.configs
+│   └── verify.configs
+└── ctsm5.3
 
 ## Prerequisites<a name="esm_prereqs"></a>
 
@@ -174,7 +217,7 @@ This will ensure that the needed programs are loaded by default when you log in 
 
 ### Module Environment for Earth Models
 
-While the default modules should be loaded at a minimum, creating a module environment that includes everything required for your given Earth model is not a bad idea for consistency. On HiPerGator we are set up to use the `gnu` compiler with Earth models. So a module collection for our `CESM 2.1.5` and `CTSM 5.3` setup includes the following.
+While the default modules above should be loaded at a minimum, I have found that creating a module environment that includes everything required for your given Earth model is not a bad idea for consistency. On HiPerGator we are set up to use the `gnu` compiler with Earth models. So a module collection for our `CESM 2.1.5` and `CTSM 5.3` setup includes the following.
 
 ```
 # include the modules from above
@@ -195,9 +238,9 @@ module restore esm_gnu_env
 module list
 ```
 
-This is not 100% necessary to build all cases or experiments in an Earth model. However, sometimes certain scripts don't behave well (mostly due to `python`), so having all the modules that will be used on the compute node loaded when you build it the case, can be a useful way to mitigate these issues.
+This is not 100% necessary to build all cases or experiments for every Earth model. However, sometimes certain scripts don't behave well (mostly due to `python`), so having all the modules that will be used on the compute node loaded when you build it the case, can be a useful way to mitigate these issues.
 
-## CIME
+# CIME
 
 ## Porting and Validating CIME<a name="cime_port"></a>
 
@@ -248,6 +291,8 @@ make
 
 The executable will be located at `/blue/GROUP/earth_models/cprnc/bld/cprnc`.
 
+# CESM 2.1.5
+
 ## Porting CESM<a name="cesm_port"></a>
 
 CESM has [two primary releases](https://www.cesm.ucar.edu/models), the current development release (v2.2.2 at the time of this writing), and the production release (v2.1.5). We will be using the production release. I am following the [CESM documentation](https://escomp.github.io/CESM/versions/cesm2.1/html/index.html), as well as the [CIME porting documentation](https://esmci.github.io/cime/versions/master/html/users_guide/porting-cime.html) while adding the steps needed to get this working on HiPerGator.
@@ -266,7 +311,7 @@ cd /blue/GROUP/earth_models
 git clone -b release-cesm2.1.5 https://github.com/ESCOMP/CESM.git cesm2.1.5
 
 # cd into your cesm directory
-cd cesm2.1.5
+cd cesm215
 
 # download the external components
 ./manage_externals/checkout_externals
@@ -353,25 +398,189 @@ module load python-core/2.7.14
 
 Additionally, to use the `addmetadata` script we need the `nco` tool `ncks`. The version available on hipergator is not new enough so we will have to create a conda environment and install the tool ourselves. Instructions for using conda on hipergator can be found [here](https://help.rc.ufl.edu/doc/Conda). You just need to download the most recent version of `nco` with something like `mamba install nco`.
 
-### Basic Usage of CESM
+## Basic Usage of CESM<a name="using_cesm"></a>
 
-### Single Point Cases in CESM
+### Recommended Reading<a name="cesm_reading"></a> 
 
-## CTSM
+There are three pieces of documentation that I strongly suggest you read through to familiarize yourself with the process of creating cases on cesm.
 
-### Porting CTSM<a name="ctsm_port"></a>
+The first is the [quick start](https://escomp.github.io/CESM/versions/cesm2.1/html/quickstart.html) section of CESM's documentation. This will give you a brief overview of everything you need to create, build, and run a case.
 
-### Testing CTSM
+The second is the ["Using the Case Control System"](https://esmci.github.io/cime/versions/master/html/users_guide/index.html) section of the CIME documentation. This will give you a more in depth look at your options when building cases. 
 
-### Basic Usage of CTSM
+Finally, in the SWES department, we will be primarily using `clm`, the land model component of CESM. Accordingly, reading through the [clm documentation](https://escomp.github.io/ctsm-docs/versions/release-clm5.0/html/users_guide/index.html) in its entirety is strongly recommended.
 
-### Single Point Cases in CTSM
+### CESM File Structure on HPG<a name="cesm_structure"></a>
 
-# Single Point Cases<a name="pts_mode"></a>
+For the "gerber" group on HiPerGator, CESM has been installed in `/blue/gerber/earth_models/cesm215`. Accordingly, the scripts to create a new case, or query information about case options, are located in `/blue/gerber/earth_models/cesm215/cime/scripts`. 
+
+Your machine config file (located at `~/.cime/config_machines.xml`) gives you control over where you want the build, and run time files for cases to go. You will also want to make a directory somewhere convenient to contain the cases you create with the `cime` scripts. 
+
+It should be noted that creating a case is different than building one. The case build should be done on the `/blue` drive for fast access during run time. The created cases can be stored in your home directory for convenience if you'd like.
+
+If you leave the `machine_config.xml` at its default settings, and create a "cases" directory at `/blue/GROUP/USER/cases`, the directory tree at `/blue/GROUP/USER` should look something like the following.
+
+```bash
+.
+├── cases
+│   └── EXAMPLE_CASE
+└── earth_model_output
+    ├── cesm_baselines
+    ├── cime_output_root
+    │   ├── archive
+    │   └── EXAMPLE_CASE
+    │       ├── bld
+    │       └── run
+    └── timings
+```
+
+### Creating, Building, and Running a Case on HPG<a name="cesm_case"></a>
+
+```bash
+# cd to the cime scripts directory
+cd /blue/gerber/earth_models/cime/scripts
+
+# create your case, specifying the case location, compset, and resolution
+./create_newcase --case /blue/GROUP/USER/cases/EXAMPLE_CASE --compset COMPSET --res RESOLUTION
+```
+
+CIME will output a bunch of text, then say whether the the case was created successfully, and where it was created.
+If you are running a compset that is not scientifically validated, you will have to add the `--run-unsupported` option to your `create_newcase` command.
+
+```bash
+# go to the case directory
+cd /blue/GROUP/USER/cases/case1
+```
+
+For the "Gerber" group, there are a few variables that we will most likely need to change. The first is the number of cores used by the model. Most compsets will request one (or several) nodes (128-512 cores) by default.
+Our research group only has access to 20 cores on our default queue, so we need to make sure we're under the QOS limit. We can do this with the `xmlchange` script.
+
+First check how many cores each component is requesting by running `./pelayout`, which will list out the individual components, along with what resources they are asking for.
+The variable we want to pay atention to is `NTASKS`. This corresponds to how many cores will be requested when the case is submitted.
+
+```bash
+# change the number of cores to something more sensible
+./xmlchange NTASKS=8
+```
+
+This will take us down to using only 8 cores when we run the case.
+
+The downside of using fewer cores, is that we may have to run the case for longer on the compute node. We can extend the time requested by changeing the `JOB_WALLCLOCK_TIME` variable.
+
+```bash
+# check the current setting
+./xmlquery JOB_WALLCLOCK_TIME
+
+# change the variable if needed
+./xmlchange JOB_WALLCLOCK_TIME=1:00:00
+```
+
+If you're unsure of the exact name of the varibale you want to check/change, you can list all the defined variables, then pipe to grep and search.
+```bash
+# running grep with the -i flag will ignore case distinction
+./xmlquery --listall | grep -i SEARCH_TERM
+```
+Once you've set all of your variables, setup, build, and submit the case as usual.
+```bash
+./case.setup
+./case.build
+./case.submit
+```
+
+If you setup and build the case but realize you need to change some variables before submitting, it's a good idea to clean the case before rebuilding. We can do this with something like:
+
+```bash
+./xmlchange SOME_VARIABLE
+
+./case.setup --clean
+./case.build --clean
+
+./case.setup
+./case.build
+./case.submit
+```
+
+### Example Case<a name="clm_example"></a>
+Here is an example of creating, building, and running a case with a compset typical of what we would use in the SWES department.
+The long name for our compset is `1850_DATM%CRUv7_CLM50%SP_SICE_SOCN_MOSART_CISM2%NOEVOLVE_SWAV` and the resolution we will be using is `f19_g17`. 
+While we can certainly use the long name for the compset, sometimes it's nicer to use the alias (assuming one is available). Here's a trick for finding your compset's alias.
+
+```bash
+# cd to the cesm, cime scripts
+cd /blue/gerber/earth_models/cesm215/cime/scripts
+
+# use the query config script, then pipe it to grep and search the compset's long name
+./query_config --compsets all | grep 1850_DATM%CRUv7_CLM50%SP_SICE_SOCN_MOSART_CISM2%NOEVOLVE_SWAV
+```
+
+Which should output the following.
+```bash
+I1850Clm50SpCru      : 1850_DATM%CRUv7_CLM50%SP_SICE_SOCN_MOSART_CISM2%NOEVOLVE_SWAV
+```
+
+Now we can create the case.
+
+```bash
+# cd to the cesm, cime scripts
+cd /blue/gerber/earth_models/cesm215/cime/scripts
+
+# create the case using a sensible name, the compset alias, and desired resolution
+./create_newcase --case /blue/GROUP/USER/cases/EXAMPLE_CASE --compset I1850Clm50SpCru --res f19_g17
+
+# cd to the case directory
+cd /blue/GROUP/USER/cases/EXAMPLE_CASE
+
+# check the amount of cores being requested by default
+./xmlquery NTASKS
+
+# it's probably going to be higher than our QOS, so we need to change it along with extending the job time
+./xmlchange NTASKS=8,JOB_WALLCLOCK_TIME=1:00:00
+
+# setup the case
+./case.setup
+
+# check the submit script to make sure it's requesting the correct amount of resources
+./preview_run
+
+# if everything looks good, build the case (this can take a few minutes)
+./case.build
+
+# submit the case to the scheduler and run the experiment
+./case.submit
+```
+
+Check your UF email for updates from the SLURM scheduler. A case can fail for many reasons, most of which should be pretty obvious.
+If you accidentally requested more resources than your QOS allows, it will tell you in the email. If your case fails with an OOM (out of memory) error, try increasing the number of cores by changing the `NTASKS` variable.
+You may want to switch to your burst QOS sometimes. You can set this manually by changing the `JOB_QUEUE` variable (using the `xmlchange` script) to the name of your burst QOS. On hipergator your burst queue is your group name with "-b" appended. So the burst queue for the "gerber" group is gerber-b.
+
+### Did My Case Fail, or Time Out?<a name="fail_vs_timeout"></a>
+There may be a situation that arises where it is difficult to tell if a case has failed, or just timed out. Here's how you can check if it is a time out issue.
+
+```bash
+# cd to your case's run directory
+cd /blue/GROUP/USER/earth_model_output/cime_output_root/CASE/run
+
+# save the names of the run time log files to a `bash` variable
+LOGS=$(ls | grep .log)
+
+# use the stat command to see when they all were last modified
+stat $LOGS | grep Modify
+```
+
+If all the times printed to the terminal are within a few seconds to a few minutes of each other, your case likely timed out. You can try rebuilding the case after increasing the `JOB_WALLCLOCK_TIME` variable.
+
+## Single Point Cases in CESM<a name="pts_mode"></a>
 
 Following the instructions [here](https://escomp.github.io/ctsm-docs/versions/release-clm5.0/html/users_guide/running-single-points/running-pts_mode-configurations.html), we can run the clm model on a single grid cell by specifying a latitude and longitude. However, the instructions on the clm website seem to be a bit outdated. CIME no longer supports the `-pts_lat` or `-pts_lon`  arguments with the `create_newcase` script, also multi-character arguments should begin with `--` rather than `-`.  We can still run on a single point by creating a new case, then changing the appropriate variables before building the executable.
 
-The compset used to test the Ordway Swisher Biological Station has the full name `1850_DATM%CRUv7_CLM50%SP_SICE_SOCN_MOSART_CISM2%NOEVOLVE_SWAV` however the short name given (`I1850Clm50BSpCru`) is not found in our supported compset lists. I think you added an extra "B" in the short compset name. We can use the `query_config` script to find supported compsets.
+__A Note on DATM_MODE__ [source](https://www2.cgd.ucar.edu/events/2019/ctsm/files/practical4-wieder.pdf#page=16)
+
+There are five modes used with CLM that specify the type of Meteorological data that’s used.
+1. CLMGSWP3 (this is the preferred meteorological data to use w/ CLM5)
+2. CLMCRUNCEP (Use global NCEP forcing at half-degree resolution from CRU goes from 1900-2010. GSWP3 similar time period and spatial resolution).
+3. CLM_QIAN (Deprecated. Use NCEP forcing at T62 resolution corrected by Qian et. al. goes from 1948-2004).
+4. CLM1PT (Use the local meteorology from your specific tower site).
+5. CPLHIST (This name may have changed. Use atmospheric data from a previous CESM simulation).
 
 ```bash
 # cd to cime/scripts 
@@ -442,7 +651,7 @@ cd /blue/gerber/cdevaneprugh/cases/osbsPTSmod
 ```
 The next section will go into where we went wrong, and some things we can do to have successful runs in the future.
 
-## CLM Best Practices and Where Our PTS Run Went Wrong<a name="clm_best_practices"></a>
+### CLM Best Practices and Where Our PTS Run Went Wrong<a name="clm_best_practices"></a>
 
 The full comment from my [post](https://bb.cgd.ucar.edu/cesm/threads/issues-downloading-input-data-in-clm5-single-point-mode.9600/#post-55331) is:
 
@@ -472,6 +681,13 @@ It would be interesting to see if I can narrow down which is messing us up. I'll
 With the abundance of compsets and resolutions, I'm going to need a better naming convention for my case directories. I think something like `compset.resolution.modifiers` would work. For example the name for our initial single point test (that failed) would be `I1850Clm50SpCru.f19_g17.PTS`.
 
 ### Compset Testing<a name="clm_compset_testing"></a>
+
+Anytime we get an error that is something like:
+
+> MCT::m_SparseMatrixPlus:: FATAL--length of vector y different from row count of sMat.Length of y = 1 Number of rows in sMat = 55296
+
+We can assume there is some issue with MOSART or CISM. The goal of running the following cases is to determine which is causing the error in single point mode.
+I did this by choosing similar compsets that use physics from clm4.0 4.5 and 5.0 as well as running a global and PTS version of each compset.
 
 __Compset Long Name	:	Compset Alias	:	Resolution Used__
 
@@ -510,16 +726,16 @@ __Compset Long Name	:	Compset Alias	:	Resolution Used__
 1850_DATM%CRUv7_CLM50%SP_SICE_SOCN_SROF_SGLC_SWAV	:	NONE	:	f19_g17
 
 1. Global: Success
-
-2. PTS: Success
+   
+3. PTS: Success
 
    
 
 2000_DATM%GSWP3v1_CLM50%SP-VIC_SICE_SOCN_RTM_CISM2%NOEVOLVE_SWAV	:	I2000Clm50Vic	:	f09_g17
 
 1. Global:
-
-2. PTS:
+   
+3. PTS:
 
    
 
@@ -534,8 +750,7 @@ HIST_DATM%GSWP3v1_CLM45%SP_SICE_SOCN_RTM_SGLC_SWAV	:	IHistClm45SpGs	:	f09_g17
 
 1. Global: Fail (Out of Memory)
 
-   > Primary job  terminated normally, but 1 process returned
-   > a non-zero exit code. Per user-direction, the job has been aborted.
+   > Primary job  terminated normally, but 1 process returned a non-zero exit code. Per user-direction, the job has been aborted.
 
 2. PTS: Success
 
@@ -543,20 +758,156 @@ HIST_DATM%GSWP3v1_CLM45%SP_SICE_SOCN_RTM_SGLC_SWAV	:	IHistClm45SpGs	:	f09_g17
 
 HIST_DATM%QIA_CLM50%BGC_SICE_SOCN_MOSART_SGLC_SWAV	:	IHistClm50BgcQianGs	:	f09_g17
 
-1. Global:
-2. PTS:
+1. Global: Fail (Out of Memory)
+   
+   > Primary job  terminated normally, but 1 process returned a non-zero exit code. Per user-direction, the job has been aborted.
 
-
+3. PTS: Success
 
 HIST_DATM%GSWP3v1_CLM50%SP_SICE_SOCN_MOSART_CISM2%NOEVOLVE_SWAV	:	IHistClm50Sp	:	f09_g17
 
 1. Global: Fail (Out of Memory)
 
-   > Primary job  terminated normally, but 1 process returned
-   > a non-zero exit code. Per user-direction, the job has been aborted.
+   > Primary job  terminated normally, but 1 process returned a non-zero exit code. Per user-direction, the job has been aborted.
 
 2. PTS: Fail
 
    > MCT::m_SparseMatrixPlus:: FATAL--length of vector y different from row count of sMat.Length of y = 1 Number of rows in sMat = 55296
+   > 
    > 000.MCT(MPEU)::die.: from MCT::m_SparseMatrixPlus::initDistributed_()
 
+__Conclusion__
+It looks like CISM is the issue. The Qian case (IHistClm50BgcQianGs) uses MOSART and the PTS mode case ran successfully.
+
+## Single Point With Spin Up ([Slides](https://www2.cgd.ucar.edu/events/2019/ctsm/files/practical4-wieder.pdf))<a name="pts_slides"></a>
+I'll go through the exercises in order here, and note any issues I ran in to or modifications I had to make.
+
+### Exercise 4a: Create a Global Case<a name='ex_4a"></a>
+The compset I'll be using is `HIST_DATM%GSWP3v1_CLM50%SP_SICE_SOCN_MOSART_SGLC_SWAV` which is a modified version of the supported compset `IHistClm50Sp` that removes the CISM portion of the model.
+
+```bash
+# cd to cime scripts
+cd /blue/gerber/earth_models/cesm215/cime/scripts
+
+# create our case
+./create_newcase --case /blue/gerber/cdevaneprugh/cases/IHistClm50Sp_001 --compset HIST_DATM%GSWP3v1_CLM50%SP_SICE_SOCN_MOSART_SGLC_SWAV --res f09_g17 --run-unsupported
+
+# cd to case
+cd /blue/gerber/cdevaneprugh/cases/IHistClm50Sp_001
+
+./case.setup
+./preview_namelists
+
+# Look for the path to the surface data set and domain file
+cat CaseDocs/lnd_in
+```
+
+### Exercise 4b: Generate Domain and Surface Data Sets<a name="ex_4b"></a>
+It looks like there's a script called `singlept` that we need access to. I think this was provided during the workshop on the NCAR server being used. Additionally, there is a `ncar_pylib` I need access to, it's possible this is available to download with `conda`.
+There was a list of many options that are changed in the `singlept` script but I can't find the variables they are setting when using `xmlquery` and looking in the `CaseDocs` directory.
+
+### Exercise 4c: Create a New Case for the Single Point Run<a name="ex_4c"></a>
+
+```bash
+# cd to cime scripts
+cd /blue/gerber/earth_models/cesm215/cime/scripts
+
+# create a new compset with a stub ice and river model
+./create_newcase --case /blue/gerber/cdevaneprugh/cases/ex_4c --compset 1850_DATM%CRUv7_CLM50%SP_SICE_SOCN_SROF_SGLC_SWAV --res f09_g17 --run-unsupported
+
+# go to case directory
+cd /blue/gerber/cdevaneprugh/cases/ex_4c
+```
+
+Following the guide there are many variables to change. Rather than list them all out, use the script `ready_clm_case` provided in this repository.
+Note: You should not change the `MPILIB` variable to `mpi-serial`. On our system, things seem to break if you do this. I am still unsure why.
+On [page 30](https://www2.cgd.ucar.edu/events/2019/ctsm/files/practical4-wieder.pdf#page=30) of the slides they need the new domain files that we would have made in exercise 4b. We'll have to skip this part for now.
+
+It _looks_ like all the variables were changed successfully, and the model was built. Unfortunately without those scripts from the workshop, we're sort of stuck. 
+
+### Exercise 4d: Single Point BGC_AD<a name="ex_4d"></a>
+The xml variable changes are almost identical to exercise 4c, with one or two exceptions. Unfortunately, we run into the same problem here in that we need the scripts from exercise 4b.
+
+# CTSM
+
+## Porting CTSM<a name="ctsm_port"></a>
+
+Porting `CTSM` is largely the same process as `CESM` was. We need to clone the repository, checkout the external components, and deploy our configuration files. There are just a couple small differences in how this is achieved due to a different version of `CIME` being used.
+
+### Download
+
+```bash
+# go to earth_models
+cd /blue/$GROUP/earth_models
+
+# clone the repo and cd into it
+git clone https://github.com/ESCOMP/CTSM.git ctsm5.3
+cd ctsm5.3
+
+# checkout the version you want to use (5.3 in our case)
+git checkout ctsm5.3.014
+```
+
+### Checkout Externals
+
+Similar to `CESM` we need to download the externals. Instead of `checkout_externals` we use a script called `git-fleximod`.
+
+```bash
+# make sure you have at least python 3.7 loaded
+python --version
+
+# in your ctsm root directory
+./bin/git-fleximod update
+```
+
+### Regression Tests
+
+You can run regression tests again if you'd like. The `scripts_regression_tests.py` script is located in `$CTSMROOT/cime/CIME/tests`. The process is identical to as it was in `CESM`.
+
+## Configs
+
+There is a slight variation in CTSM 5.3 vs 5.2
+
+Regardless, we need to remove the `--exclusive` line in the generic config batch file. It is line number 167 in `ccs_config/machines/config_batch.xml`. This option will only allow `CTSM` executables to be run on its own node. However, because we are constantly sharing cores on a node in hipergator, if this is enabled it effectively means your executables will never run and stay in the queue forever.
+
+Additionally, add the following line to the `config_machines.xml` file located in `$CTSMROOT/ccs_config/machines`.
+
+`<value MACH="hipergator">c07*|login*</value>`
+
+## Basic Usage of CTSM
+
+See the section in CESM. The scripts are located in `$CTSMROOT/cime/scripts`.
+
+## Single Point Cases in CTSM
+
+We need to build the executables in `$CTSMROOT/tools`.
+
+1. Build PIO Library
+
+   ```BASH
+   cd $CTSMROOT/libraries/parallelio
+   
+   # set the installation point for PIO
+   mkdir bld
+   
+   # link netcdf paths, disable pnetcdf and enable netcdf integration
+   cmake -DNetCDF_C_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2 -DNetCDF_Fortran_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1 -DWITH_PNETCDF=OFF -DCMAKE_INSTALL_PREFIX=`pwd`/bld
+   
+   make
+   
+   make check
+   
+   make install
+   ```
+
+   Also add the appropriate path to the config_machines config.
+
+2. Build `mksurfdata_esmf` executables.
+
+```BASH
+cd $CTSMROOT/tools/mksurfdata_esmf
+
+./gen_mksurfdata_build --machine hipergator
+```
+
+Unfortunately we end up getting quite a few errors and are not able to build the executable.
