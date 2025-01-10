@@ -203,7 +203,7 @@ I tried building the executable as described in the `README` with
 ```
 cd $CTSMROOT/tools/mksurfdata_esmf
 
-./gen_mksurfdata_build -m hipergator
+./gen_mksurfdata_build --machine hipergator
 ```
 
 but was met with the following error.
@@ -212,6 +212,8 @@ but was met with the following error.
 The PIO directory for the PIO build is required and was not set in the configure
 Make sure a PIO build is provided for gnu with openmpi in config_machines
 ```
+
+## Building The PIO Library
 
 There is a parallelio directory in `$CTSMROOT/libraries/parralelio`. However it's just a clone of the PIO github page.
 
@@ -223,7 +225,7 @@ cd $CTSMROOT/libraries/parallelio
 mkdir bld
 
 # link netcdf paths, disable pnetcdf and enable netcdf integration
-cmake -DNetCDF_C_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2 -DNetCDF_Fortran_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1 -DWITH_PNETCDF=OFF -DPIO_ENABLE_NETCDF_INTEGRATION=ON -DCMAKE_INSTALL_PREFIX=`pwd`/bld
+cmake -DNetCDF_C_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2 -DNetCDF_Fortran_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1 -DWITH_PNETCDF=OFF -DCMAKE_INSTALL_PREFIX=`pwd`/bld
 
 make
 
@@ -235,8 +237,109 @@ make install
 
 It looks like a successful install. I'm not 100% sure about the directory structure, so I may redo it later.
 
-Let's retest the mksurfdata build script again.
+To get the mksurfdata build script, I added the following environment variable to config_machine.xml:
 
-It's still hung up on the same thing. I think the path forward is to figure out how to point to the PIO libraries in the config files now. I'll look at some of the other configs and see how it's done.
+```
+<env name="PIO">/blue/gerber/earth_models/ctsm5.3/libraries/parallelio/bld</env>
+```
 
-There's a `config_pio.xml` file that I may be able to modify with what I just built.
+and the following to gnu_hipergator.cmake:
+
+```
+if(DEFINED ENV{PIO})
+  set(PIO_LIBDIR "$ENV{PIO}/lib")
+  set(PIO_INCDIR "$ENV{PIO}/include")
+endif()
+```
+
+This makes the PIO library recognized by the mksurfdata build script.
+
+## The mksurfdata build script
+
+Running `gen_mksurfdata_build` now, I can seeget the following output:
+
+```
+[cdevaneprugh@login12 mksurfdata_esmf]$ ./gen_mksurfdata_build --machine hipergator
+copying /blue/gerber/earth_models/ctsm5.3/ccs_config/machines/cmake_macros/../hipergator/gnu_hipergator.cmake to /blue/gerber/earth_models/ctsm5.3/tools/mksurfdata_esmf/tool_bld
+-- The Fortran compiler identification is GNU 12.2.0
+-- Detecting Fortran compiler ABI info
+-- Detecting Fortran compiler ABI info - done
+-- Check for working Fortran compiler: /apps/mpi/gcc/12.2.0/openmpi/4.1.6/bin/mpif90 - skipped
+-- Found MPI_Fortran: /apps/mpi/gcc/12.2.0/openmpi/4.1.6/bin/mpif90 (found version "3.1") 
+-- Found MPI: TRUE (found version "3.1")  
+-- Found NetCDF: /apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2/include;/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1/include (found suitable version "4.9.2", minimum required is "4.7.4") found components: Fortran 
+-- FindNetCDF defines targets:
+--   - NetCDF_VERSION [4.9.2]
+--   - NetCDF_PARALLEL [TRUE]
+--   - NetCDF_C_CONFIG_EXECUTABLE [/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2/bin/nc-config]
+--   - NetCDF::NetCDF_C [SHARED] [Root: /apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2] Lib: /apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2/lib64/libnetcdf.so 
+--   - NetCDF_Fortran_CONFIG_EXECUTABLE [/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1/bin/nf-config]
+--   - NetCDF::NetCDF_Fortran [SHARED] [Root: /apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1] Lib: /apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1/lib/libnetcdff.so 
+-- Found ESMF library: /apps/gcc/12.2.0/openmpi/4.1.6/esmf/8.7.0/lib/libO/Linux.gfortran.64.openmpi.default/libesmf.a
+-- Found ESMF: /apps/gcc/12.2.0/openmpi/4.1.6/esmf/8.7.0/lib/libO/Linux.gfortran.64.openmpi.default (found suitable version "8.7.0", minimum required is "8.2.0")  
+-- Configuring done (3.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: /blue/gerber/earth_models/ctsm5.3/tools/mksurfdata_esmf/tool_bld
+```
+
+This is followed by an attempt to build the Fortran objects located in `tool_bld/CMakeFiles/mksurfdata.dir/`. The attempts fail, throwing the error `Rank mismatch between actual argument at (1) and actual argument at (2) (rank-1 and scalar)`.
+
+This is an error that should be ignored by the `-fallow-argument-mismatch` flag in our `gnu_hipergator.cmake` file.
+For some reason, it seems like the fortran flags are not being carried over when the `make` command is run.
+
+If we look at the files in `tool_bld/CMakeFiles/mksurfdata.dir` we might be able to get an idea of whats going on.
+This is where the Fortran programs are located, as well as the `make` flags and apprently other important files.
+
+Looking at `flags.make` in this directory, we can see the only fortran flag included is `-g`. This is strange, as there should be several others that we defined from our compiler config file.
+The other interesting thing is that the `-g` flag is associated with debugging. I'll looke and see if this flag was run while building the PIO library, or is used in general with CTSM.
+In the gen_mksurfdata_build script, the cmake command is run with the flag: -DCMAKE_BUILD_TYPE=Debug which is probably what causes the -g flag to appear. Removing it does cause the -g flag to disappear, still fails to build though.
+
+PIO library: Has these flags -fallow-argument-mismatch -O3 -DNDEBUG -O3 -flto=auto -ffat-lto-objects
+CTSM:
+
+We also get this output:
+
+```
+make[2]: [CMakeFiles/mksurfdata.dir/build.make:101: CMakeFiles/mksurfdata.dir/mkdiagnosticsMod.F90.o] Error 1
+make[2]: Leaving directory '/blue/gerber/earth_models/ctsm5.3/tools/mksurfdata_esmf/tool_bld'
+make[1]: [CMakeFiles/Makefile2:83: CMakeFiles/mksurfdata.dir/all] Error 2
+make[1]: Leaving directory '/blue/gerber/earth_models/ctsm5.3/tools/mksurfdata_esmf/tool_bld'
+make: [Makefile:136: all] Error 2
+```
+
+Which I would like to spend time going through the files parsing them out.
+
+File 1: CMakeFiles/mksurfdata.dir/build.make line 101 includes some variables $(Fortran_DEFINES) $(Fortran_INCLUDES) $(Fortran_FLAGS) which are defined in the flags.make file.
+
+File 2: CMakeFiles/Makefile2 line 83 runs the make command for build.make
+
+File 3: Makefile runs the make command for Makefile2
+
+### Modifying gen_mksurfdata_build
+
+The goal is to find the minimum flags that get the installation further along. We'll start with the first error.
+
+Removing the Debug build type, and adding in `-DCMAKE_Fortran_FLAGS=" -fallow-argument-mismatch"` at line 170.
+
+Running the script again gets us further along, however we still fail with the following output:
+
+```
+Error: BOZ literal constant at (1) is neither a data-stmt-constant nor an actual argument to INT, REAL, DBLE, or CMPLX intrinsic function [see ‘-fno-allow-invalid-boz’]
+```
+
+This is the other flag in our compiler config that should be `-fallow-invalid-boz`. Adding this to the cmake flags and rerunning, we get further in the install with the following output errors.
+
+1. Nonnegative width required in format string at (1)
+* The format string in your Fortran code contains an invalid field width specifier (e.g., I, F, or E descriptors missing a nonnegative integer width)
+* Correct the code by adding a valid width to the width specifier (I --> I5)
+* ignore with -fallow-invalid-format
+
+2. Line truncated at (1) [-Werror=line-truncation]
+* This error occurs when a line in your Fortran source code exceeds the maximum allowed length
+* ignore with -Wno-line-truncation
+
+3. Syntax error in argument list at (1)
+* This error indicates a syntax problem in a subroutine or function call's argument list
+* must fix in source code
+
+Possible to allow a legacy standard to relax the syntax rules with `-std=legacy`. I should check whether the legacy standard flag has been used in PIO or CTSM builds.
