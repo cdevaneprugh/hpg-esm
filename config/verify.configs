@@ -17,6 +17,6 @@ xmllint --noout --schema ../clm5.0/cime/config/xml_schemas/config_compilers_v2.x
 echo
 
 # verify ctsm5.3 branch configs
-echo "ctsm5.3.012"
-xmllint --noout --schema ../ctsm5.3.012/cime/CIME/data/config/xml_schemas/config_machines.xsd ctsm5.3.012/hipergator/config_machines.xml 
-xmllint --noout --schema ../ctsm5.3.012/cime/CIME/data/config/xml_schemas/config_batch.xsd ctsm5.3.012/config_batch.xml
+echo "ctsm5.3"
+xmllint --noout --schema ../ctsm5.3/cime/CIME/data/config/xml_schemas/config_machines.xsd ctsm5.3/hipergator/config_machines.xml 
+xmllint --noout --schema ../ctsm5.3/cime/CIME/data/config/xml_schemas/config_batch.xsd ctsm5.3/hipergator/config_batch.xml

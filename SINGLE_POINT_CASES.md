@@ -343,3 +343,12 @@ This is the other flag in our compiler config that should be `-fallow-invalid-bo
 * must fix in source code
 
 Possible to allow a legacy standard to relax the syntax rules with `-std=legacy`. I should check whether the legacy standard flag has been used in PIO or CTSM builds.
+
+I tried adding `-std=legacy` to the CMAKE flags with no luck.
+
+Next is to supress all warnings as errors by adding a cmake flag to the options vairable in the script:
+
+```
+options="-Wno-dev -Wno-error=dev -Wno-deprecated -Wno-error=deprecated -Wno-error"
+```
+
