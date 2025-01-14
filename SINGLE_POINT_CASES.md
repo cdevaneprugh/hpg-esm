@@ -346,9 +346,42 @@ Possible to allow a legacy standard to relax the syntax rules with `-std=legacy`
 
 I tried adding `-std=legacy` to the CMAKE flags with no luck.
 
-Next is to supress all warnings as errors by adding a cmake flag to the options vairable in the script:
+## Current Combo that works except the syntac error
+
+-DCMAKE_Fortran_FLAGS=" -g -fallow-argument-mismatch -fallow-invalid-boz -ffree-line-length-none"
+
+The ffree line length deals with some type of truncation issue that is treated as a syntax error.
+
+It appears the invalid width error is a proper syntax error and cannot be suppressed. I don't know why this is happening in the slightest.
+I fixed it by adding widths to the lines that needed them. You can see the modified version of the script on github.
+
+When we run it not spits out the error that:
+```
+No rule to make target '/blue/gerber/earth_models/ctsm5.3/libraries/parallelio/bld/lib/libpiof.so', needed by 'mksurfdata'.  Stop.
+```
+
+This looks like one of the things that popped up in the github issue. Exploring now.
+
+When I built the PIO library, the static libraries were built instead of the shared. After rebuilding PIO with the shared libraries, we get the following error when running the gen_mksurfdata_build script.
 
 ```
-options="-Wno-dev -Wno-error=dev -Wno-deprecated -Wno-error=deprecated -Wno-error"
+/usr/bin/ld: warning: libgptl.so, needed by /blue/gerber/earth_models/ctsm5.3/libraries/parallelio/bld/lib/libpiof.so, not found (try using -rpath or -rpath-link)
+/blue/gerber/earth_models/ctsm5.3/libraries/parallelio/bld/lib/libpiof.so: undefined reference to `__perf_mod_MOD_t_startf'
+/blue/gerber/earth_models/ctsm5.3/libraries/parallelio/bld/lib/libpioc.so: undefined reference to `GPTLstart'
+/blue/gerber/earth_models/ctsm5.3/libraries/parallelio/bld/lib/libpioc.so: undefined reference to `GPTLstop'
+/blue/gerber/earth_models/ctsm5.3/libraries/parallelio/bld/lib/libpiof.so: undefined reference to `__perf_mod_MOD_t_stopf'
+collect2: error: ld returned 1 exit status
 ```
+
+I removed the `-g` flag and reran, getting the same output as above. I wonder if the gptl lib is 100% necessary or if there's a flag I can pass to the compiler to avoid this.
+
+Looking at the error, `libgptl.so` is required by `libpiof.so` and `libpioc.so` meaning the `parallelio` library needs it.
+I wonder if there is an option in the PIO library to build it, or if I need to install it separately, then link it while building `pio`. If I do need to link it manually, I need to figure out how to do that.
+
+There is an option in `parallelio/CMakeLists.txt` at line 86.
+
+```
+option (PIO_ENABLE_TIMING    "Enable the use of the GPTL timing library"    ON)
+```
+
 
