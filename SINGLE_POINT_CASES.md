@@ -384,4 +384,33 @@ There is an option in `parallelio/CMakeLists.txt` at line 86.
 option (PIO_ENABLE_TIMING    "Enable the use of the GPTL timing library"    ON)
 ```
 
+Rebuilding the PIO library:
 
+```
+cmake -DNetCDF_C_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2 -DNetCDF_Fortran_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1 -DWITH_PNETCDF=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=`pwd`/bld
+```
+
+Could possibly disable `PIO_ENABLE_TIMING` to see if it is even necessary.
+
+I disabled `PIO_ENABLE_TIMING` and was able to build `mksurfdata` finally. When we try to run the script or run `ldd` it looks like `libpiof.so` and `libpioc.so` were not linked properly.
+
+I can confirm they were built in `libraries/parallelio/bld/lib`.
+
+In the open issue on GitHub, when developers were trying to port this to another platform, they changed a relative path to an absolute one in something related to the PIO library.
+
+I added the absolute path to the libraries in `CMakeLists.txt`, rebuilt the executable with the same issue.
+
+I wonder if adding the absolute paths to PIO/inc and PIO/lib in our cmake macros would help. This is how we approached linking libraries with netcdf.
+
+I updated the configs and this didn't work. I also noticed that if you run `ldd` on libpiof.so that libpioc.so is not found.
+
+The line in CMakeLists.txt add_library(pioc STATIC IMPORTED) implies that pioc and piof are static libraries. I built them as shared libraries.
+This gives two options: 1 rebuild pio with static libraries (I thought I got an error the first time). 2 change the line to SHARED IMPORTED.
+
+Changing STATIC to SHARED does seem to work. The libraries are in the correct spot. What's weird is I'm not sure if what _should_ have been done is static and shared libraries being built for PIO, then linking with GPTL.
+
+I think I should try to rebuild PIO with default settings, or have chatGPT help me determine what settings are needed and what/how to link needed libraries.
+Then I can rebuild mksurfdata with possibly the default CMakeLists.txt file? I'll also throw an update on the forms. 
+
+I'll upload files and documentation to chatGPT and see if it can help walk me through some of this stuff.
+Figuring out how to build some of the optional documentation will also be helpful.
