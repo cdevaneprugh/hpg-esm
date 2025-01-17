@@ -465,4 +465,22 @@ doxygen Doxyfile
 
 Look for a new directory called `docs`. Hipergator does not have an html viewer for the terminal. If you'd like the documentation downloaded to you personal computer go to https://ood.rc.ufl.edu/ and sign into your account. Then locate the `docs` directory from the file explorer in the top menu. You can download the docs, and then use your internet browser to view the documentation.
 
+## New Build Try
 
+This time we set the LD_LIBRARY_PATH before building the pio library
+
+```
+LD_LIBRARY_PATH=/blue/gerber/earth_models/ctsm5.3/libraries/parallelio/src/gptl/:$LD_LIBRARY_PATH
+
+# make sure the library path makes sense
+echo $LD_LIBRARY_PATH
+
+# run cmake and make again
+cmake -DNetCDF_C_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2 -DNetCDF_Fortran_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1 -DWITH_PNETCDF=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=`pwd`/bld
+
+make
+
+make install
+```
+
+This in combination with modifying the CMakeLists.txt file to include shared libraries seemed to work.
