@@ -414,3 +414,55 @@ Then I can rebuild mksurfdata with possibly the default CMakeLists.txt file? I'l
 
 I'll upload files and documentation to chatGPT and see if it can help walk me through some of this stuff.
 Figuring out how to build some of the optional documentation will also be helpful.
+
+## Building Documentation
+
+### CTSM
+To build the CTSM docs I think I need to use conda to install python and sphinx. Awesome
+
+I just did this on my personal computer as it was easier to get sphinx and some other sphinx libraries installed.
+On my PC I had to run the following commands to get the docs to build.
+
+```
+sudo apt install sphinx
+pip install sphinx sphinx_rtd_theme
+
+cd doc
+
+mkdir bld
+
+./build_docs -b bld/
+```
+
+It appears to just mirror the documentation on their website. Nothing specific to the CTSM version.
+
+### PARALLELIO
+Documentation that is built is identical to the website. No need to build.
+[Website Doc](https://ncar.github.io/ParallelIO/index.html)
+
+```
+# load cmake and doxyfile
+module load cmake
+module load doxyfile
+
+# cd to the docs
+cd $CTSMROOT/libraries/parallelio/doc
+
+# make and cd into a build directory
+mkdir bld
+cd bld/
+
+# run cmake to generate the build files
+cmake ..
+
+# modify the Doxyfile config if needed
+# can change build dir, build latex docs, etc
+vim Doxyfile
+
+# build the documentation
+doxygen Doxyfile
+```
+
+Look for a new directory called `docs`. Hipergator does not have an html viewer for the terminal. If you'd like the documentation downloaded to you personal computer go to https://ood.rc.ufl.edu/ and sign into your account. Then locate the `docs` directory from the file explorer in the top menu. You can download the docs, and then use your internet browser to view the documentation.
+
+
