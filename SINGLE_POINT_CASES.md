@@ -484,3 +484,31 @@ make install
 ```
 
 This in combination with modifying the CMakeLists.txt file to include shared libraries seemed to work.
+
+## Update
+
+Restarting HPG, GPTL seems to not be linked now. After trying again the same thing happens. It is linked when building, but after restarting terminal it forgets where `libgptl` is located.
+
+Used RPATH to build parallelio and now it keeps the gptl library linked after logging out.
+
+Some issues with libraries not linked in the `mksurfdata` executable now.
+
+```
+tool_bld/mksurfdata: /lib64/libstdc++.so.6: version `GLIBCXX_3.4.29' not found (required by tool_bld/mksurfdata)
+tool_bld/mksurfdata: /lib64/libstdc++.so.6: version `GLIBCXX_3.4.26' not found (required by tool_bld/mksurfdata)
+tool_bld/mksurfdata: /lib64/libgfortran.so.5: version `GFORTRAN_10' not found (required by tool_bld/mksurfdata)
+tool_bld/mksurfdata: /lib64/libgfortran.so.5: version `GFORTRAN_10' not found (required by /blue/gerber/earth_models/ctsm5.3/libraries/parallelio/bld/lib/libpiof.so)
+tool_bld/mksurfdata: /lib64/libgfortran.so.5: version `GFORTRAN_10' not found (required by /apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1/lib/libnetcdff.so.7)
+```
+
+Additionally, libpiof.so shows similar issues:
+
+```
+bld/lib/libpiof.so: /lib64/libgfortran.so.5: version `GFORTRAN_10' not found (required by bld/lib/libpiof.so)
+bld/lib/libpiof.so: /lib64/libgfortran.so.5: version `GFORTRAN_10' not found (required by /apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1/lib/libnetcdff.so.7)
+```
+
+Hard to know if this 100% matters or could be ignored. It certainly looks like they were built correctly.
+
+Solved: This is caused by `gcc 12.2.0` not being loaded upon login. Need to restore the `gcc` environment when running these scripts (likely).
+
