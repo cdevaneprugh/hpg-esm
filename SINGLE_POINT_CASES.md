@@ -512,3 +512,132 @@ Hard to know if this 100% matters or could be ignored. It certainly looks like t
 
 Solved: This is caused by `gcc 12.2.0` not being loaded upon login. Need to restore the `gcc` environment when running these scripts (likely).
 
+# PIO AND MKSURFDATA BUILD
+
+The `mksurfdata` executable requires four libraries be properly configured before building.
+The first three (`MPI` `NetCDF` and `ESMF`) have already been configured on HiPerGator. The last library needed is `parallelio` (aka `PIO`), which we must build ourselves.
+
+## Building PIO
+
+First make sure the appropriate modules are loaded. Below are the standard modules used for most things `CESM` and `CTSM` related.
+
+```
+module load perl/5.24.1
+module load subversion/1.9.7
+module load cmake/3.26.4
+module load gcc/12.2.0
+module load python/3.11
+module load openmpi/4.1.6
+module load netcdf-c/4.9.2
+module load netcdf-f/4.6.1
+```
+
+Go to the `parallelio` directory and create a build birectory.
+
+```
+cd /blue/gerber/earth_models/ctsm5.3/libraries/parallelio
+
+mkdir bld
+```
+
+You can then run the following `cmake` command either via the command line or by a script. I find throwing it into a simple `bash` script is best as you can tweak settings easier and keep track of your build.
+
+```
+cmake \
+  -DNetCDF_C_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2 \
+  -DNetCDF_Fortran_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1 \
+  -DWITH_PNETCDF=OFF \
+  -DBUILD_SHARED_LIBS=ON \
+  -DCMAKE_INSTALL_PREFIX=`pwd`/bld \
+  -DCMAKE_INSTALL_RPATH=`pwd`/src/gptl \
+  -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=TRUE \
+
+make
+
+make install
+```
+
+## Building mksurfdata
+
+We need to modify several files in order to build the executable. I will try to make a fork of ctsm in the future with all of this already completed. If that is not available for some reason, here is how to fix the existing code.
+
+First go to the directory at `CTSMROOT/tools/mksurfdata_esmf`.
+
+Then modify the `CMakeLists.txt` file at `CTSMROOT/tools/mksurfdata_esmf/src/CMakeLists.txt`.
+`CMakeLists.txt` is a configuration file that CMake uses to define the build process, including source files, dependencies, build targets, and project settings.
+
+At lines 51 and 52, change the word STATIC to SHARED so the lines read as follows.
+
+```
+add_library(pioc SHARED IMPORTED)
+add_library(piof SHARED IMPORTED)
+set_property(TARGET pioc PROPERTY IMPORTED_LOCATION $ENV{PIO}/lib/libpioc.so)
+set_property(TARGET piof PROPERTY IMPORTED_LOCATION $ENV{PIO}/lib/libpiof.so)
+```
+
+If you notice in the bottom two lines, we are looking for the shared libraries `libpioc.so` and `libpiof.so`. This conflicted with the previous two lines looking for static libraries.
+
+Next we have to correct some Fortran syntax errors in `src/mksurfdata.F90`. If you try to compile you will be met with the following errors.
+
+```
+/ctsm5.3/tools/mksurfdata_esmf/src/mksurfdata.F90:271:24:
+
+  271 |      write(ndiag,'(2(a,I))') ' npes = ', npes, ' grid size = ', grid_size
+      |                        1
+Error: Nonnegative width required in format string at (1)
+
+/ctsm5.3/tools/mksurfdata_esmf/src/mksurfdata.F90:295:19:
+
+  295 |      read(nfpio, '(i)', iostat=ier) pio_iotype
+      |                   1
+Error: Nonnegative width required in format string at (1)
+
+/ctsm5.3/tools/mksurfdata_esmf/src/mksurfdata.F90:328:27:
+
+  328 |         write (ndiag,'(a, I, a, I)') ' node_count = ', node_count, ' grid_size = ', grid_size
+      |                           1
+Error: Nonnegative width required in format string at (1)
+```
+
+To fix this we make the following changes at lines 271, 295, and 328 respectively.
+
+```
+271 |      write(ndiag,'(2(a,I10))') ' npes = ', npes, ' grid size = ', grid_size
+
+295 |      read(nfpio, '(I5)', iostat=ier) pio_iotype
+
+328 |         write (ndiag,'(a, I10, a, I10)') ' node_count = ', node_count, ' grid_size = ', grid_size
+```
+
+Finally, modify line 170 of the `gen_mksurfdata_build` script to the following.
+
+```
+CC=mpicc FC=mpif90 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_Fortran_FLAGS=" -fallow-argument-mismatch -fallow-invalid-boz -ffree-line-length-none" $options $cwd/src
+```
+
+Then run
+```
+./gen_mksurfdata_build --machine hipergator
+```
+and the executable should build with the following output.
+
+```
+Successfully created mksurfdata_esmf executable for: hipergator_gnu for openmpi library
+```
+
+It is a good idea to check that the `parallelio` libraries were properly linked.
+```
+# go to the build directory
+cd tool_bld
+
+# examine linked libraries in the executable
+ldd mksurfdata | grep libpio
+```
+
+You should see something like
+```
+libpiof.so => /blue/gerber/earth_models/uf.ctsm/libraries/parallelio/bld/lib/libpiof.so (0x00001500753d4000)
+libpioc.so => /blue/gerber/earth_models/uf.ctsm/libraries/parallelio/bld/lib/libpioc.so (0x0000150075182000)
+```
+
+If it says "not found" then the libraries were not linked correctly and you need to retry building the executable.
