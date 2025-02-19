@@ -44,7 +44,6 @@ docs/
   - The process for forking CTSM. 
   - You can duplicate these steps if you wish to fork CTSM or our UF repo for your own modifications.
   - Not required reading if you are only interested in porting.
-
 - __`mksurfdata-fixes.md`__
   - A record of all the bug fixes and modifications in `$CTSM/tools`.
 
