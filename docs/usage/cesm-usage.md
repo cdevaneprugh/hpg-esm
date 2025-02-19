@@ -10,8 +10,6 @@
 
    1.4 [Example](clm_example)
 
-   1.5 [Fail vs Time Out](fail_vs_timeout)
-
 2. [Single Point Cases](pts_mode)
 
    2.1 [Best Practices](clm_best_practices)
@@ -172,22 +170,6 @@ cd /blue/GROUP/USER/cases/EXAMPLE_CASE
 Check your UF email for updates from the `SLURM` scheduler. A case can fail for many reasons, most of which should be pretty obvious.
 If you accidentally requested more resources than your QOS allows, it will tell you in the email. If your case fails with an OOM (out of memory) error, try increasing the number of cores by changing the `NTASKS` variable.
 You may want to switch to your burst QOS sometimes. You can set this manually by changing the `JOB_QUEUE` variable (using the `xmlchange` script) to the name of your burst QOS. On hipergator your burst queue is your group name with "-b" appended. So the burst queue for the "gerber" group is gerber-b.
-
-### 1.5 Did My Case Fail, or Time Out?<a name="fail_vs_timeout"></a>
-There may be a situation that arises where it is difficult to tell if a case has failed, or just timed out. Here's how you can check if it is a time out issue.
-
-```bash
-# cd to your case's run directory
-cd /blue/GROUP/USER/earth_model_output/cime_output_root/CASE/run
-
-# save the names of the run time log files to a `bash` variable
-LOGS=$(ls | grep .log)
-
-# use the stat command to see when they all were last modified
-stat $LOGS | grep Modify
-```
-
-If all the times printed to the terminal are within a few seconds to a few minutes of each other, your case likely timed out. You can try rebuilding the case after increasing the `JOB_WALLCLOCK_TIME` variable.
 
 ## 2. Single Point Cases in CESM<a name="pts_mode"></a>
 
