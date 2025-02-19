@@ -11,7 +11,7 @@
     <DIN_LOC_ROOT_CLMFORC>$DIN_LOC_ROOT/atm/datm7</DIN_LOC_ROOT_CLMFORC>
     <DOUT_S_ROOT>$CIME_OUTPUT_ROOT/archive/$CASE</DOUT_S_ROOT>
     <BASELINE_ROOT>/blue/gerber/$ENV{USER}/earth_model_output/cesm_baselines</BASELINE_ROOT>
-    <CCSM_CPRNC>/blue/gerber/earth_models/cprnc/bld/cprnc</CCSM_CPRNC>
+    <CCSM_CPRNC>/blue/gerber/earth_models/shared/cprnc/bld/cprnc</CCSM_CPRNC>
     <GMAKE>make</GMAKE>
     <BATCH_SYSTEM>slurm</BATCH_SYSTEM>
     <SUPPORTED_BY>sgerber@ufl.edu</SUPPORTED_BY>
@@ -36,7 +36,6 @@
       <command name="load">gcc/12.2.0</command>
       <command name="load">lapack/3.11.0</command>
       <command name="load">openmpi/4.1.6</command>
-      <command name="load">esmf/8.7.0</command>
       <command name="load">python/3.11</command>
       <command name="load">netcdf-c/4.9.2</command>
       <command name="load">netcdf-f/4.6.1</command>
@@ -44,6 +43,7 @@
     </module_system>
     <environment_variables>
       <env name="ESMFMKFILE">/apps/gcc/12.2.0/openmpi/4.1.6/esmf/8.7.0/lib/libO/Linux.gfortran.64.openmpi.default/esmf.mk</env>
+      <env name="PIO">/blue/gerber/earth_models/shared/parallelio/bld</env>
       <env name="OMP_STACKSIZE">256M</env><!--L3 cache size of hpg-default cpu-->
     </environment_variables>
     <resource_limits>
