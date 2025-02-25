@@ -56,7 +56,7 @@ If you leave the `machine_config.xml` at its default settings, and create a "cas
 
 ```bash
 # cd to the cime scripts directory
-cd /blue/gerber/earth_models/cime/scripts
+cd /blue/gerber/earth_models/cesm2.1.5/cime/scripts
 
 # create your case, specifying the case location, compset, and resolution
 ./create_newcase --case /blue/GROUP/USER/cases/EXAMPLE_CASE --compset COMPSET --res RESOLUTION
@@ -140,7 +140,7 @@ Now we can create the case.
 
 ```bash
 # cd to the cesm, cime scripts
-cd /blue/gerber/earth_models/cesm215/cime/scripts
+cd /blue/gerber/earth_models/cesm2.1.5/cime/scripts
 
 # create the case using a sensible name, the compset alias, and desired resolution
 ./create_newcase --case /blue/GROUP/USER/cases/EXAMPLE_CASE --compset I1850Clm50SpCru --res f19_g17

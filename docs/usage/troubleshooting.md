@@ -1,7 +1,12 @@
 # Troubleshooting
-## Types of Failures
-### Build Failures
-### Runtime Failures
+
+Be sure to read the CTSM documentation on [troubleshooting](https://escomp.github.io/ctsm-docs/versions/master/html/users_guide/trouble-shooting/trouble-shooting.html).
+
+
+
+------
+
+
 
 ## Common SLURM Job Failure Messages
 
@@ -47,7 +52,14 @@ When running jobs on an HPC cluster using SLURM, users may encounter failure mes
   - Resolve any failures in the dependency chain before resubmitting.
   - Consider removing dependencies if they are not necessary.
 
+
+
+------
+
+
+
 ## Log Files
+
 ```bash
 # cd to case directory
 cd /case/directory/log/files
@@ -66,10 +78,49 @@ Another way is to grep for errors recursively through your case files.
 grep -ir error
 ```
 
+
+
+------
+
+
+
 ## The CaseStatus File
+
+The **$CASEROOT/CaseStatus** file contains a log of all the job states and [xmlchange](https://esmci.github.io/cime/versions/master/html/Tools_user/xmlchange.html) commands in chronological order. Below is an example of status messages:
+
+```bash
+2017-02-14 15:29:50: case.setup starting
+---------------------------------------------------
+2017-02-14 15:29:54: case.setup success
+---------------------------------------------------
+2017-02-14 15:30:58: xmlchange success <command> ./xmlchange STOP_N=2,STOP_OPTION=nmonths  </command>
+---------------------------------------------------
+2017-02-14 15:31:26: xmlchange success <command> ./xmlchange STOP_N=1  </command>
+---------------------------------------------------
+2017-02-14 15:33:51: case.build starting
+---------------------------------------------------
+2017-02-14 15:53:34: case.build success
+---------------------------------------------------
+2017-02-14 16:02:35: case.run starting
+---------------------------------------------------
+2017-02-14 16:20:31: case.run success
+---------------------------------------------------
+2017-02-14 16:20:45: st_archive starting
+---------------------------------------------------
+2017-02-14 16:20:58: st_archive success
+---------------------------------------------------
+```
+
+A good way to check on the status of a case is to examine the `CaseStatus` file. If you have a failure, it will give you a short description, and usually point you to a log file which contains more information on the failure.
+
+
+
+------
+
 
 
 ## Did My Case Fail, or Time Out?<a name="fail_vs_timeout"></a>
+
 There may be a situation that arises where it is difficult to tell if a case has failed, or just timed out. Here's one way to check if it is a time out issue.
 
 ```bash
@@ -85,34 +136,48 @@ stat $LOGS | grep Modify
 
 If all the times printed to the terminal are within a few seconds to a few minutes of each other, your case likely timed out. You can try rebuilding the case after increasing the `JOB_WALLCLOCK_TIME` variable.
 
-# 11.4. Troubleshooting runtime problems ([FROM CIME DOCS](https://esmci.github.io/cime/versions/master/html/users_guide/troubleshooting.html))
-To see if a run completed successfully, check the last several lines of the cpl.log file for a string like SUCCESSFUL TERMINATION. A successful job also usually copies the log files to the $CASEROOT/logs directory.
 
-Check these things first when a job fails:
 
-Did the model time out?
+------
 
-Was a disk quota limit hit?
 
-Did a machine go down?
 
-Did a file system become full?
+## [Troubleshooting a job that fails](https://esmci.github.io/cime/versions/master/html/users_guide/running-a-case.html#troubleshooting-a-job-that-fails)
+
+There are several places to look for information if a job fails. Start with the **STDOUT** and **STDERR** file(s) in **$CASEROOT**. If you don’t find an obvious error message there, the **$RUNDIR/$model.log.$datestamp** files will probably give you a hint.
+
+First, check **cpl.log.$datestamp**, which will often tell you *when* the model failed. Then check the rest of the component log files.
+
+To see if a run completed successfully, check the last several lines of the `cpl.log`file for a string like `SUCCESSFUL TERMINATION`. A successful job also usually copies the log files to the `$CASEROOT/logs directory`.
+
+## [Troubleshooting runtime problems](https://esmci.github.io/cime/versions/master/html/users_guide/troubleshooting.html))
+
+**Check these things first when a job fails:**
+
+1. Did the model time out?
+
+2. Was a disk quota limit hit?
+
+3. Did a machine go down?
+
+4. Did a file system become full?
 
 If any of those things happened, take appropriate corrective action (see suggestions below) and resubmit the job.
 
-If it is not clear that any of the above caused a case to fail, there are several places to look for error messages.
+**If it is not clear that any of the above caused a case to fail, there are several places to look for error messages.**
 
-Check component log files in your run directory ($RUNDIR). This directory is set in the env_run.xml file. Each component writes its own log file, and there should be log files for every component in this format: cpl.log.yymmdd-hhmmss. Check each log file for an error message, especially at or near the end.
+- Check component log files in your run directory (`$RUNDIR`). This directory is set in the `env_run.xml` file. Each component writes its own log file, and there should be log files for every component in this format: `cpl.log.yymmdd-hhmmss`. Check each log file for an error message, especially at or near the end.
 
-Check for a standard out and/or standard error file in $CASEROOT. The standard out/err file often captures a significant amount of extra model output and also often contains significant system output when a job terminates. Useful error messages sometimes are found well above the bottom of a large standard out/err file. Backtrack from the bottom in search of an error message.
+- Check for a standard out and/or standard error file in `$CASEROOT`. The standard out/err file often captures a significant amount of extra model output and also often contains significant system output when a job terminates. Useful error messages sometimes are found well above the bottom of a large standard out/err file. Backtrack from the bottom in search of an error message.
 
-Check for core files in your run directory and review them using an appropriate tool.
+- Check for core files in your run directory and review them using an appropriate tool.
 
-Check any automated email from the job about why a job failed. Some sites’ batch schedulers send these.
+- Check any automated email from the job about why a job failed. Some sites’ batch schedulers send these.
 
-Check the archive directory: $DOUT_S_ROOT/$CASE. If a case failed, the log files or data may still have been archived.
+- Check the archive directory: `$DOUT_S_ROOT/$CASE`. If a case failed, the log files or data may still have been archived.
 
-Common errors
+
+### Common errors
 
 One common error is for a job to time out, which often produces minimal error messages. Review the daily model date stamps in the cpl.log file and the timestamps of files in your run directory to deduce the start and stop time of a run. If the model was running fine, but the wallclock limit was reached, either reduce the run length or increase the wallclock setting.
 
@@ -120,11 +185,18 @@ If the model hangs and then times out, that usually indicates an MPI or file sys
 
 Another error that can cause a timeout is a slow or intermittently slow node. The cpl.log file normally outputs the time used for every model simulation day. To review that data, grep the cpl.log file for the string tStamp as shown here:
 
-> grep tStamp cpl.log.* | more
+```bash
+grep tStamp cpl.log.* | more
+```
+
 The output looks like this:
 
+```bash
 tStamp_write: model date = 10120 0 wall clock = 2009-09-28 09:10:46 avg dt = 58.58 dt = 58.18
 tStamp_write: model date = 10121 0 wall clock = 2009-09-28 09:12:32 avg dt = 60.10 dt = 105.90
+```
+
+
 Review the run times at the end of each line for each model day. The “avg dt =” is the average time to simulate a model day and “dt = “ is the time needed to simulate the latest model day.
 
 The model date is printed in YYYYMMDD format and the wallclock is the local date and time. In the example, 10120 is Jan 20, 0001, and the model took 58 seconds to run that day. The next day, Jan 21, took 105.90 seconds.
@@ -141,12 +213,12 @@ Rerunning with additional debugging information
 
 There are a few changes you can make to your case to get additional information that aids in debugging:
 
-Increase the value of the run-time xml variable INFO_DBUG: ./xmlchange INFO_DBUG=2. This adds more information to the cpl.log file that can be useful if you can’t tell what component is aborting the run, or where bad coupling fields are originating. (This does NOT require rebuilding.)
+Increase the value of the run-time xml variable INFO_DBUG: `./xmlchange INFO_DBUG=2`. This adds more information to the cpl.log file that can be useful if you can’t tell what component is aborting the run, or where bad coupling fields are originating. (This does NOT require rebuilding.)
 
-Try rebuilding and rerunning with the build-time xml variable DEBUG set to TRUE: ./xmlchange DEBUG=TRUE.
+Try rebuilding and rerunning with the build-time xml variable `DEBUG` set to `TRUE`: `./xmlchange DEBUG=TRUE`.
 
 This adds various runtime checks that trap conditions such as out-of-bounds array indexing, divide by 0, and other floating point exceptions (the exact conditions checked depend on flags set in macros defined in the cmake_macros subdirectory of the caseroot).
 
-The best way to do this is often to create a new case and run ./xmlchange DEBUG=TRUE before running ./case.build. However, if it is hard for you to recreate your case, then you can run that xmlchange command from your existing case; then you must run ./case.build --clean-all before rerunning ./case.build.
+The best way to do this is often to create a new case and run `./xmlchange DEBUG=TRUE` before running `./case.build`. However, if it is hard for you to recreate your case, then you can run that xmlchange command from your existing case; then you must run `./case.build --clean-all` before rerunning `./case.build`.
 
 Note that the model will run significantly slower in this mode, so this may not be feasible if the model has to run a long time before producing the error. (Sometimes it works well to run the model until shortly before the error in non-debug mode, have it write restart files, then restart after rebuilding in debug mode.) Also note that answers will change slightly, so if the error arises from a rare condition, then it may not show up in this mode.
