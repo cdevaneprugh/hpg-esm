@@ -168,6 +168,26 @@ Check your UF email for updates from the `SLURM` scheduler. A case can fail for 
 If you accidentally requested more resources than your QOS allows, it will tell you in the email. If your case fails with an OOM (out of memory) error, try increasing the number of cores by changing the `NTASKS` variable.
 You may want to switch to your burst QOS sometimes. You can set this manually by changing the `JOB_QUEUE` variable (using the `xmlchange` script) to the name of your burst QOS. On hipergator your burst queue is your group name with "-b" appended. So the burst queue for the "gerber" group is gerber-b.
 
+## Compset Testing
+
+All compsets were tested at a resolution of `f19_g17`, with `NTASKS=8` and `JOB_WALLCLOCK_TIME=2:00:00`.
+
+**I1850Clm50SpCru** - Successful run
+
+**I1850Clm50SpCru With STUBS** - Successful run
+
+**I1850Clm60SpCru** - Successful run
+
+**I1850Clm60Sp** - Successful run
+
+**I1850Clm50Bgc** - Successful run
+
+**IHistClm50BgcQian** - Initial issue downloading input data. MPI runtime error when submitted.
+
+**IHistClm50Sp** - Case submit error, couldn't find all input data.
+
+**IHistClm60SpCru** - MPI Runtime error
+
 ## Documentation Issues
 
 After reading the documentation and the following two comments from CESM forum admins, it looks like __everything__ in the documentation's single point case creation is either outdated or broken.

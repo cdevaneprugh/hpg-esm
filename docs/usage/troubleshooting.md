@@ -154,13 +154,13 @@ To see if a run completed successfully, check the last several lines of the `cpl
 
 **Check these things first when a job fails:**
 
-1. Did the model time out?
+- Did the model time out?
 
-2. Was a disk quota limit hit?
+- Was a disk quota limit hit?
 
-3. Did a machine go down?
+- Did a machine go down?
 
-4. Did a file system become full?
+- Did a file system become full?
 
 If any of those things happened, take appropriate corrective action (see suggestions below) and resubmit the job.
 
