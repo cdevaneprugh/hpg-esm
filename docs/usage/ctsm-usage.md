@@ -172,21 +172,35 @@ You may want to switch to your burst QOS sometimes. You can set this manually by
 
 All compsets were tested at a resolution of `f19_g17`, with `NTASKS=8` and `JOB_WALLCLOCK_TIME=2:00:00`.
 
+**I1850Clm45Bgc** - Successful run
+
+**I1850Clm50Bgc** - Successful run
+
+**I1850Clm50BgcCrop** - Successful run
+
 **I1850Clm50SpCru** - Successful run
 
 **I1850Clm50SpCru With STUBS** - Successful run
 
-**I1850Clm60SpCru** - Successful run
-
 **I1850Clm60Sp** - Successful run
 
-**I1850Clm50Bgc** - Successful run
+**I1850Clm60SpCru** - Successful run
 
-**IHistClm50BgcQian** - Initial issue downloading input data. MPI runtime error when submitted.
+**I1850Clm60BgcCropG** - ERROR: Could not find all input data on any server.
 
-**IHistClm50Sp** - Case submit error, couldn't find all input data.
+**IHistClm50Sp** - ERROR: Could not find all input data on any server.
+
+**IHistClm50BgcQian** - ERROR: Could not find all input data on any server.
 
 **IHistClm60SpCru** - MPI Runtime error
+
+**I1PtClm50SpRs**- Build error, possibly with grid size.
+
+```
+ERROR: No default value found for streamslist with attributes {'model_grid': 'a%1.9x2.5_l%1.9x2.5_oi%null_r%null_g%null_w%null_z%null_m%gx1v7', 'datm_mode': '1PT', 'datm_co2_tseries': 'none', 'datm_presaero': 'clim_2000', 'datm_presndep': 'clim_2000', 'datm_preso3': 'clim_2000', 'clm_usrdat_name': 'UNSET'}.
+```
+
+**I1PtClm60Bgc** - Same build error as above.
 
 ## Documentation Issues
 
