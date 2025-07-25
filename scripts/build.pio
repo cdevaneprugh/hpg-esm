@@ -1,8 +1,8 @@
 #!/bin/bash
 
 cmake \
-  -DNetCDF_C_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2 \
-  -DNetCDF_Fortran_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1 \
+  -DNetCDF_C_PATH=/apps/gcc/14.2.0/openmpi/5.0.7/netcdf-c/4.9.3 \
+  -DNetCDF_Fortran_PATH=/apps/gcc/14.2.0/openmpi/5.0.7/netcdf-f/4.6.2 \
   -DWITH_PNETCDF=OFF \
   -DBUILD_SHARED_LIBS=ON \
   -DCMAKE_INSTALL_PREFIX=`pwd`/bld \

@@ -13,7 +13,6 @@ Note that there are many ways your research group could decide to set this up, t
 This directory contains:
 
 - **Earth model source code** (e.g., CESM, CTSM)
-- **Configuration files** for HiPerGator
 - **Input data** (boundary conditions, forcing datasets)
 - **Shared utilities** (e.g., `cprnc`, `parallelio`, custom scripts)
 
@@ -40,25 +39,30 @@ earth_models/
 
 For consistency, we define a **dedicated module collection** for Earth system modeling. This setup ensures the correct libraries are loaded every time.
 
+There is a script in this repo located at `scripts/module.env.setup` that will set the environment up with the name "ctsm-modules".
+
+The steps to do it manually are:
 ```bash
 module purge  # Remove conflicting modules
 
 # Load essential dependencies
-module load perl/5.24.1 
 module load subversion/1.9.7 
+module load perl/5.24.1 
 module load cmake/3.26.4
-module load gcc/12.2.0
-module load python/3.11
+module load python/3.12
+module load gcc/14.2.0
 module load lapack/3.11.0
-module load openmpi/4.1.6
-module load netcdf-c/4.9.2 netcdf-f/4.6.1
+module load openmpi/5.0.7
+module load netcdf-c/4.9.3 netcdf-f/4.6.2
+module load hdf5
+module load esmf/8.8.1
 
-# Save the environment as "esm_gnu_env"
-module save esm_gnu_env
+# Save the collection
+module save MY_MODULE_COLLECTION
 
 # Verify correct setup
 module purge
-module restore esm_gnu_env
+module restore MY_MODULE_COLLECTION
 module list
 ```
 

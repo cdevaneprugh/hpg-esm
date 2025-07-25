@@ -1,6 +1,4 @@
 # Ignore Earth model installs, input data, and libraries.
-cesm2.1.5/
-clm5.0/
 ctsm5.3/
 inputdata/
 shared/

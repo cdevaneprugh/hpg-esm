@@ -1,11 +1,11 @@
 # Porting CTSM<a name="ctsm_port"></a>
 
-Porting `CTSM` is largely the same process as `CESM`. You need to clone the repository, download the external components, and deploy our configuration files. There are just a couple small differences in how this is achieved due to a different version of `CIME` being used. Additionally, we have a forked the `CTSM` repository, so the configuration files and necessary code fixes have already been handled.
+Porting `CTSM` is largely the same process as `CESM`. You need to clone the repository, and download the external components. There are just a couple small differences in how this is achieved due to a different version of `CIME` being used. Additionally, we have a forked the `CTSM` repository, so the configuration files and necessary code fixes have already been handled.
 
 ## Downloading the Code
 
 ```bash
-# go the install directory. Teh Gerber group uses earth_models
+# go the install directory. The Gerber group uses earth_models
 cd /blue/$GROUP/earth_models
 
 # clone the forked repo and cd into it
@@ -19,9 +19,6 @@ git checkout uf-ctsm5.3
 Similar to `CESM` we need to download the externals. Instead of `checkout_externals` we use a script called `git-fleximod`.
 
 ```bash
-# make sure you have at least python 3.7 loaded
-python --version
-
 # in your ctsm root directory
 ./bin/git-fleximod update
 ```
@@ -71,6 +68,8 @@ libpioc.so => /parallelio/bld/lib/libpioc.so (0x0000150075182000)
 
 If it says "not found" then the libraries were not linked correctly and you need to retry building the executable.
 
+
+__Note:__ If there is a build error and you need to rerun the script, be sure to delete the `tool_build` directory before attempting to rebuild.
 ## Setup ctsm_pylib
 
 There is a `conda` environment that needs to be setup in order to use `mksurfdata`.

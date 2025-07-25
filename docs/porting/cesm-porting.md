@@ -71,11 +71,11 @@ If you run `./checkout_externals -S` after changing the CIME branch, it may show
 
 Once the config files are setup, we need to run regression tests to ensure things are working correctly. The regression tests script will test various parameters of the Earth model in isolation, then send a dozen or two small cases to the scheduler to be run. This script is not resource intensive and can be run from a login node.
 
-You'll need python to run the script. Version 3.11 seems to work just fine.
+You'll need python to run the script. 
 
 ```bash
 # load python
-module load python/3.11
+module load python/3.12
 
 # go to the location of the regression tests
 cd /blue/GROUP/earth_models/CESM/cime/scripts/tests

@@ -23,7 +23,7 @@
 
 ### History
 
-- Initially, land modeling within CESM was handled by **CLM**, developed since the early 2000s.
+- Initially, land modeling within CESM was handled by **CLM**, a component developed since the early 2000s.
 - **CTSM** was introduced as an enhanced land model that can operate independently or within CESM.
 - **CTSM5** is the latest version, widely used in land-atmosphere interactions and biogeochemical modeling.
 
