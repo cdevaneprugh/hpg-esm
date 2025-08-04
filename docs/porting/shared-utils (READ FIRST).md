@@ -66,7 +66,7 @@ module restore MY_MODULE_COLLECTION
 module list
 ```
 
-Using this saved environment minimizes issues when running scripts and compiling models. Remember to load these modules before porting and using Earth system models.
+Using this saved environment minimizes issues when running scripts and compiling models. 
 
 ## 3. Configuring CIME on HiPerGator
 
@@ -91,7 +91,7 @@ There are two ways to configure these files for CIME:
    └── config_machines.xml
    ```
 
-If you plan on installing only one Earth model, option two is recommended. Basic HiPerGator configuration files can be found in the `config` directory of this repository. Due to subtle variations in config files between the Earth models and releases, a very bare bones version of the configs are available in `config/hpg`, as well as model specific versions in their respective directories. The Gerber group, uses multiple models, each using different CIME versions. Therefore, we have opted to fork the CTSM repository, incorporating necessary configurations to simplify installation. Users only need to update relevant paths to match their research group’s setup if they wish to run CTSM. It's possible we will fork CESM in the future as well.
+If you plan on installing only one Earth model, option two is recommended. Basic HiPerGator configuration files can be found in the `config` directory of this repository. Due to subtle variations in config files between the Earth models and releases, these may require some modification. The Gerber group, uses multiple models, each using different CIME versions. Therefore, we have opted to fork the CTSM repository and incorporate configuration files there to simplify installation. Users only need to update relevant paths to match their research group and personal directories if they wish to run CTSM. It's possible we will fork CESM in the future as well.
 
 ### Example
 
@@ -130,7 +130,7 @@ The utilities in this section have already been built. Sections 4.2 and 4.3 are 
 Ensure required modules are loaded:
 
 ```bash
-module load gcc/12.2.0 openmpi/4.1.6 netcdf-c/4.9.2 netcdf-f/4.6.1
+module load gcc/14.2.0 openmpi/5.0.7 netcdf-c/4.9.3 netcdf-f/4.6.2
 ```
 
 Clone and build:
@@ -156,17 +156,19 @@ cprnc/bld/cprnc
 
 If you plan on making your own surface datasets via the `mksurfdata` utility, this library is required. The location you install it in is up to you. We opted to [clone the repo](https://github.com/NCAR/ParallelIO) and build in  `earth_models/shared/parallelio` , as we have multiple Earth models running in parallel that may need this library. If you are only running one model, you could install it in the default directory at `$CTSMROOT/libraries/parallelio`.
 
+There is also a script provided to do this located at `/scripts/build.pio`
+
 ```bash
 # restore defalut modules
-module restore esm_gnu_env
+module restore MY_MODULE_COLLECTION
 
 # cd to library location
 cd $CTSMROOT/libraries/parallelio
 mkdir bld
 
 cmake \
-  -DNetCDF_C_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-c/4.9.2 \
-  -DNetCDF_Fortran_PATH=/apps/gcc/12.2.0/openmpi/4.1.6/netcdf-f/4.6.1 \
+  -DNetCDF_C_PATH=/apps/gcc/12.2.0/openmpi/5.0.7/netcdf-c/4.9.3 \
+  -DNetCDF_Fortran_PATH=/apps/gcc/12.2.0/openmpi/5.0.7/netcdf-f/4.6.2 \
   -DWITH_PNETCDF=OFF \
   -DBUILD_SHARED_LIBS=ON \
   -DCMAKE_INSTALL_PREFIX=`pwd`/bld \
